@@ -1,6 +1,6 @@
 const $ = (s, r = document) => r.querySelector(s), v = $('#v'), D = DB.get();
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const today = () => new Date().toISOString().slice(0, 10), day = s => Math.floor(Date.parse(String(s).slice(0, 10)) / 864e5);
+const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10), day = s => Math.floor(Date.parse(String(s).slice(0, 10)) / 864e5);
 const run = p => p.then(() => alert('Done')).catch(e => alert(e.message));
 const dl = (n, x) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([x])); a.download = n; a.click(); };
 const prog = (t, s) => { const k = Object.values(t.skills); return Math.round(k.length ? (s.pct + k.reduce((a, b) => a + +b, 0) / k.length) / 2 : s.pct); };
@@ -61,7 +61,7 @@ function wall(t) {
     <div class=c><canvas id=b></canvas></div><div class=c><canvas id=k></canvas></div></div>
   <div class=c><b>Exercises</b><br><input id=ex placeholder="e.g. 2.3.14"><button id=ea>Add exercise</button>
     <div>${E.map(e => `<span class=t data-i="${e.id}" style="border-left:6px solid ${TBChart.COL[e.status]}">${esc(e.label)} (${e.status})</span>`).join('')}</div>
-    <small>Click an exercise to cycle: todo, done, interesting, hard.</small>
+    <small>Click an exercise to cycle: todo, done, interesting, hard. Right-click to delete.</small>
     <p><b>Interesting:</b> ${E.filter(e => e.status == 'interesting').map(e => esc(e.label)).join(', ') || 'none yet'}</p></div>
   <div class=c><b>Key notes</b> (LaTeX: $x^2$ inline, $$\\int_0^1 x\\,dx$$ block)<textarea id=nt>${esc(t.notes)}</textarea><div id=pv style="white-space:pre-wrap"></div></div>
   <div class=c><b>Skills</b> ${sk.map(([n, p]) => `<span class=t data-s="${esc(n)}">${esc(n)} ${p}%</span>`).join('')}<button id=sa>Add skill</button></div>
@@ -87,7 +87,11 @@ function wall(t) {
   $('#rc') && ($('#rc').onclick = () => { R.claimed = true; sv(); re(); });
 
   // exercises
-  $('#ea').onclick = () => { const l = $('#ex').value.trim(); l && (D.exercises.push({ id: DB.uid(), tb: t.id, label: l, status: 'todo', date: today() }), sv(), re()); };
+  $('#ea').onclick = () => { const l = $('#ex').value.trim(); if (E.some(e => e.label == l)) return alert(l + ' is already in this textbook.'); l && (D.exercises.push({ id: DB.uid(), tb: t.id, label: l, status: 'todo', date: today() }), sv(), re()); };
+  v.querySelectorAll('[data-i]').forEach(el => el.oncontextmenu = ev => {
+    ev.preventDefault(); const e = D.exercises.find(x => x.id == el.dataset.i);
+    confirm(`Delete ${e.label}?`) && (D.exercises.splice(D.exercises.indexOf(e), 1), sv(), re());
+  });
   v.querySelectorAll('[data-i]').forEach(el => el.onclick = () => {
     const e = D.exercises.find(x => x.id == el.dataset.i); e.status = STATES[(STATES.indexOf(e.status) + 1) % 4]; e.date = today(); sv(); re();
   });
