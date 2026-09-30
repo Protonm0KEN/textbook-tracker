@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.0.1 (2026-09-30), chart fixes
+
+**Commit title:** `fix: consistent daily line and bar charts, local dates, duplicate check and delete`
+
+- Line and bar charts show exact per-day counts for ranges up to about 25 days, run up to today and cover at least a week
+- Midpoint-rule smoothing now only applies to long ranges, so line and bar always agree
+- Clean y-axis ticks; unit label no longer overlaps the textbook title; point markers on the line
+- "Today" uses the local date instead of UTC
+- Adding an exercise that already exists is blocked; right-click an exercise to delete it
+
 ## v0.0.0 (2026-09-30), first version
 
 **Commit title:** `feat: Textbook Tracker v0.0.0, textbook walls, custom charts, Sheets sync`

@@ -24,9 +24,12 @@ const TBChart = (() => {
   function average(days, N = 90) {
     if (!days.length) return { xs: [], ys: [] };
     const m = {}; days.forEach(d => m[d] = (m[d] || 0) + 1);
-    const a = days.reduce((x, y) => Math.min(x, y)), b = days.reduce((x, y) => Math.max(x, y));
-    const span = b - a + 1, w = Math.max(3, span / 25), f = t => m[Math.floor(t)] || 0;
-    const n = Math.min(N, span * 2), xs = [], ys = [];
+    const now = Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5);
+    const b = Math.max(days.reduce((x, y) => Math.max(x, y)), now);   // run up to today
+    const a = Math.min(days.reduce((x, y) => Math.min(x, y)), b - 6); // show at least a week
+    // window of 1 day (exact daily counts) up to ~25 days; wider windows only for long ranges
+    const span = b - a + 1, w = Math.max(1, span / 25), f = t => m[Math.floor(t)] || 0;
+    const n = Math.min(N, span), xs = [], ys = [];
     for (let i = 0; i < n; i++) {
       const t = a + (i + .5) * span / n;
       xs.push(t); ys.push(mid(f, t - w / 2, t + w / 2, Math.ceil(w * 4)) / w);
@@ -48,18 +51,21 @@ const TBChart = (() => {
   function xy(cv, title, s, bar) {
     const { g, w, h } = init(cv, title);
     if (!s.ys.length) return empty(g, w, h);
-    g.textAlign = 'right'; g.fillText('exercises per day', w - 4, 14); g.textAlign = 'left';
+    g.globalAlpha = .7; g.fillText('exercises per day', 0, 32); g.globalAlpha = 1;
     const ys = bar ? rebin(s.ys, 30) : s.ys;
-    const L = 34, R = w - 8, T = 26, B = h - 20, mx = Math.max(...ys, 1e-9) * 1.1;
+    const L = 34, R = w - 8, T = 42, B = h - 20;
+    const nice = m => { const p = 10 ** Math.floor(Math.log10(m)), f = m / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
+    const mx = nice(Math.max(...ys, 1e-9));
     const X = i => L + (i + .5) * (R - L) / ys.length, Y = v => B - v / mx * (B - T);
     g.globalAlpha = .3;
     for (let i = 0; i <= 4; i++) { const y = B - i * (B - T) / 4; g.beginPath(); g.moveTo(L, y); g.lineTo(R, y); g.stroke(); }
     g.globalAlpha = 1;
-    for (let i = 0; i <= 4; i++) g.fillText((mx * i / 4).toFixed(1), 0, B - i * (B - T) / 4 + 4);
+    for (let i = 0; i <= 4; i++) g.fillText(String(+(mx * i / 4).toFixed(2)), 0, B - i * (B - T) / 4 + 4);
     g.fillText(dstr(s.xs[0]), L, h - 5); g.textAlign = 'right'; g.fillText(dstr(s.xs[s.xs.length - 1]), R, h - 5);
     g.fillStyle = g.strokeStyle = COL.done;
     if (bar) { const bw = (R - L) / ys.length * .8; ys.forEach((v, i) => g.fillRect(X(i) - bw / 2, Y(v), bw, B - Y(v))); }
-    else { g.lineWidth = 2; g.beginPath(); ys.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))); g.stroke(); }
+    else { g.lineWidth = 2; g.beginPath(); ys.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))); g.stroke();
+      if (ys.length <= 31) ys.forEach((v, i) => { g.beginPath(); g.arc(X(i), Y(v), 3, 0, 7); g.fill(); }); }
   }
 
   // d = [{k:label, v:value, c:color}]

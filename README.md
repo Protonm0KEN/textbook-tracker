@@ -50,4 +50,4 @@ Use **Export .xlsx** on the home page; **Import .xlsx** restores it.
 Attach the textbook, solution manual and testbank PDFs on a textbook wall (kept in your browser). **Download archive** zips metadata, notes, data and files into folders.
 
 ## Version
-Current: v0.0.0, see CHANGELOG.md.
+Current: v0.0.1, see CHANGELOG.md.
